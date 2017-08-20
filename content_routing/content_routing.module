@@ -1,0 +1,126 @@
+<?php
+
+// $Id: content_routing.module,v 1.1 2008/12/04 11:23:40 ralph Exp $
+
+/**
+ * Display help and module information
+ * @param section which section of the site we're displaying help 
+ * @return help text for section
+ */
+function content_routing_help($section='') {
+  $output = '';
+
+  switch ($section) {
+    case "admin/help#content_routing":
+      $output .= '<p>' . t("content_routing module help...") . '</p>';
+      break;
+  }
+
+  return $output;
+} // function content_routing_help
+
+/**
+ * Implementation of hook_perm. This module doesn't really use permissions much.
+ * @param none
+ * @return an array of permissions
+ */
+function content_routing_perm() {
+  return array('administer content_routing module');
+} // function content_routing_perm()
+
+/** 
+ * Implementation of hook_menu. Only one menu item is provided as a link to block settings
+ * @param may_cache
+ * @return an array manu items
+ */
+function content_routing_menu() {
+  $items = array();
+  // The main settings screen
+  $items['admin/settings/content_routing'] = array(
+    'title' => 'Content Routing',
+    'description' => 'Administer the Content Routing module',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('content_routing_admin_settings_form'),
+    'access arguments' => array('administer content_routing module'),
+    'file' => 'content_routing.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/settings/content_routing/cron'] = array(
+    'page callback' => 'content_routing_cron',
+    'access arguments' => array('administer content_routing module'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_cron
+ * To save a bit of memory, and keep this file small, we include
+ * an external file and call into that.
+ * @param none
+ * @return none
+ */
+function content_routing_cron() {
+  require_once('content_routing.cron.inc');
+  return _content_routing_cron();
+}
+
+function content_routing_block($op = 'list', $delta = 0, $edit = array()) {
+  switch($op) {
+    case 'list':
+      // If $op is "list", we just need to return a list of block descriptions.
+      // This is used to provide a list of possible blocks to the administrator,
+      // end users will not see these descriptions.
+      $blocks[0]['info'] = t('Content Routing');
+      return $blocks;
+      break;
+    case 'configure':
+      // Display the same stuff we show in the administration screen
+      return;
+      break;
+    case 'save':
+      // If $op is "save", we need to save settings from the configuration form.
+      return;
+    case 'view': default:
+      $block['subject'] = t('Related Content');       // Override-able in the block settings
+      $block['cache'] = BLOCK_CACHE_PER_PAGE;
+      $block['content'] = _content_routing_block_content();
+
+      return $block;
+      break;
+  }
+}
+
+function content_routing_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if($op == 'view') {
+    global $content_routing_nid;
+    $content_routing_nid = $node->nid;
+  }
+  return;
+}
+
+function _content_routing_block_content() {
+  global $content_routing_nid;
+  if(!$content_routing_nid) {
+    return;
+  }
+  $max = variable_get('content_routing_display_docs', 5);
+  $result = db_query("SELECT c.rsid,n.title FROM {content_routing_links} AS c JOIN {node} AS n WHERE c.csid=%d AND c.ctype='node' AND c.rsid=n.nid ORDER BY score DESC LIMIT %d", $content_routing_nid, $max);
+  $output = '<ul>';
+  $rows = 0;
+  while($row = db_fetch_object($result)) {
+    $rows ++;
+    $output .= '<li>' . l(t($row->title), 'node/' . $row->rsid) . '</li>';
+  }
+  $output .= '</ul>';
+  if($rows) {
+    return $output;
+  } else {
+    return '';
+  }
+}
+
+// The following line is for Vim users - please don't delete it.
+// vim: set filetype=php expandtab tabstop=2 shiftwidth=2:

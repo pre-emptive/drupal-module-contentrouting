@@ -1,0 +1,6 @@
+; $Id: content_routing.info,v 1.1 2008/12/04 11:23:40 ralph Exp $
+name = Content Routing
+description = Show users links to other content that they may be interested in
+dependencies[] = search
+version = 1.0
+core = 6.x

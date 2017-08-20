@@ -1,0 +1,54 @@
+<?php
+
+// $Id: content_routing.install,v 1.1 2008/12/04 11:23:40 ralph Exp $
+
+/**
+ * Implementation of hook_install.
+ * @param none
+ * @return none
+ */
+function content_routing_install() {
+  drupal_install_schema('content_routing');
+}
+
+/**
+ * Implementation of hook_uninstall.
+ * @param none
+ * @return none
+ */
+function content_routing_uninstall() {
+  foreach (array(
+    'content_routing_last_timestamp',
+    'content_routing_nodes_per_run',
+    'content_routing_documents',
+    'content_routing_display_docs',
+    'content_routing_min_age',
+    'content_routing_score_drop_pc',
+    'content_routing_stopwords_percentage',
+    'content_routing_stopwords',
+    'content_routing_stopwords_timestamp',
+    'content_routing_stopwords_max_age',
+  ) as $item) {
+    variable_del($item);
+  }
+  drupal_uninstall_schema('content_routing');
+}
+
+function content_routing_schema() {
+  $schema = array();
+  $schema['content_routing_links'] = array(
+    'fields' => array(
+      'csid' => array('type' => 'int', 'unsigned' => TRUE, 'default' => 0, 'not null' => TRUE),
+      'ctype' => array('type' => 'varchar', 'length' => 16, 'default' => NULL, 'not null' => TRUE),
+      'lastupdate' => array('type' => 'int', 'unsigned' => TRUE, 'default' => 0, 'not null' => TRUE),
+      'rsid' => array('type' => 'int', 'unsigned' => TRUE, 'default' => 0, 'not null' => TRUE),
+      'rtype' => array('type' => 'varchar', 'length' => 16, 'default' => NULL, 'not null' => TRUE),
+      'score' => array('type' => 'float', 'default' => 0, 'not null' => TRUE),
+    ),
+  );
+
+  return $schema;
+}
+
+// The following line is for Vim users - please don't delete it.
+// vim: set filetype=php expandtab tabstop=2 shiftwidth=2 smartindent:
